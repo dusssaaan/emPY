@@ -1,5 +1,5 @@
 """
-set the parameters for the emPY scripts
+zmena 1 set the parameters for the emPY scripts
 """
 
 
