@@ -1,12 +1,20 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Fri Jan  4 11:39:48 2019
+POINT TO DOMAIN ZERO SCRIPT
 
-@author: p6001
+Function:    
+- point_to_domain: take point emisions to numpy array
+- regridding_control: check how many emissions from the source file is
+  in the grid and compare the numbers
+
+Libraries and modules needed: 
+libraries: pandas, geopandas, numpy, shapely, time, os
+modules:
+
+Revision History:
+    
+30.01.2019 D. Stefanik: creating first version of script
 """
 
-import pandas as pd
 import geopandas as gpd
 import shapely
 import numpy as np

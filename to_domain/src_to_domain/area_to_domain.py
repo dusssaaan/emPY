@@ -1,5 +1,5 @@
 """
-AREA TO GRID SCRIPT
+AREA TO DOMAIN SCRIPT
 
 Function:    
 - area_to_grid: prepare emisions from csv and shape file to numpy array
@@ -7,7 +7,7 @@ Function:
   in the grid and compare the numbers
 
 Libraries and modules needed: 
-libraries: pandas, geopandas, numpy, shapely, time, os
+libraries: numpy, shapely, time, os
 modules:
 
 Revision History:
@@ -15,8 +15,7 @@ Revision History:
 30.01.2019 D. Stefanik: creating first version of script
 """
 
-#import pandas as pd
-#import geopandas as gpd
+
 import numpy as np
 import shapely
 import time
@@ -81,14 +80,10 @@ def area_to_grid(emis_file, shape_file, output_dir, name, def_emis, projection, 
             imin=int((a[1]-YORIG)/(XCELL))
             imax=int((a[3]-YORIG)/(XCELL))
              
-            if jmin < 0:
-               jmin=0
-            if imin < 0:
-               imin=0
-            if jmax > nj-1:
-               jmax=nj-1 
-            if imax > ni-1:
-               imax=ni-1   
+            if jmin < 0: jmin=0
+            if imin < 0: imin=0
+            if jmax > nj-1: jmax=nj-1 
+            if imax > ni-1: imax=ni-1   
             
                       
             for i in range(imin,imax+1):
@@ -98,13 +93,8 @@ def area_to_grid(emis_file, shape_file, output_dir, name, def_emis, projection, 
                     
                     pol=shapely.geometry.box(x,y,x+XCELL,y+XCELL,ccw=True)
                     
-                    if source_type == 'A':
-                    
-                       coef=pol2.intersection(pol).area/pol2.area
-                    
-                    else:
-                       
-                      coef=pol2.intersection(pol).length/pol2.length  
+                    if source_type == 'A': coef=pol2.intersection(pol).area/pol2.area
+                    else: coef=pol2.intersection(pol).length/pol2.length  
                     
                     for de in def_emis.values():    
                         dic_out['{0}_{1}'.format(de,sn)][i,j]+=coef*em[de]
@@ -122,7 +112,8 @@ def area_to_grid(emis_file, shape_file, output_dir, name, def_emis, projection, 
         
     for sn in emis_file['cat_internal'].unique():    
         for de in def_emis.values():
-            np.save('{0}/{1}-{2}-{3}'.format(output_dir,sn,de,name),  dic_out['{0}_{1}'.format(de,sn)])  
+            if np.mean(dic_out[f'{de}_{sn}'])!=0:
+               np.save(f'{output_dir}/{sn}-{de}-{name}', dic_out[f'{de}_{sn}'])  
             
         
         
@@ -165,21 +156,19 @@ def regridding_control(emis_file, shape_file, output_dir, name, def_emis, projec
     for sn in emis_file['cat_internal'].unique():
         for de in def_emis.values():   
             
-            if '{0}_{1}'.format(de,sn) in dic_con.keys():
+            if f'{de}_{sn}' in dic_con.keys():
             
-                sk=np.load('{0}/{1}-{2}-{3}.npy'.format(output_dir,sn,de,name)) 
-                   
-                #dic_out['{0}_{1}'.format(de,emission_inv[sn])]+=sk
+                b=np.sum(dic_con[f'{de}_{sn}'])     
                 
+                if b !=0:
                 
-                a=np.sum(sk)
+                    a=np.sum(np.load(f'{output_dir}/{sn}-{de}-{name}.npy')) 
+                    per=np.round((a-b)/b*100,1) 
                 
-                b=np.sum(dic_con['{0}_{1}'.format(de,sn)])
-                
-                per=0
-                if b > 0:
-                   per=np.round((a-b)/b*100,1) 
-                
+                else:     
+                    a=0
+                    per=0
+                               
                 print('cat {0}, pollutant {1}, diference {2:.2f} in percent {3}'.format(sn,de, a-b, per))
                 print('value in grid {0:.3f}'.format(a))
                 print('value in source file {0:.3f}'.format(b))

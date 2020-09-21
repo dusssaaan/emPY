@@ -1,12 +1,18 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Fri Jan  4 11:39:48 2019
+POINT TO DOMAIN SCRIPT
 
-@author: p6001
+Function:    
+- point_to_domain: take point emisions to the csv with proper names and domain projection
+
+Libraries and modules needed: 
+libraries: pandas, geopandas, numpy, shapely, time, os
+modules:
+
+Revision History:
+    
+30.01.2019 D. Stefanik: creating first version of script
 """
 
-import pandas as pd
 import geopandas as gpd
 import shapely
 import numpy as np
@@ -16,7 +22,7 @@ import os
 
 
 
-def point_to_domain(emis_file,output_dir, name, def_emis, projection, inProj, grid_params, emis_proc_names, mask_out=False):
+def point_to_domain(emis_file,output_dir, name, def_emis, projection, inProj, grid_params, mask_out=False):
     
     # start time of script for quality control
     start_time = time.time()
@@ -49,7 +55,7 @@ def point_to_domain(emis_file,output_dir, name, def_emis, projection, inProj, gr
     emis_file=emis_file[(emis_file['y']>=YORIG)]
     emis_file=emis_file[(emis_file['x']<=XORIG+(nj-1)*XCELL)]
     emis_file=emis_file[(emis_file['y']<=YORIG+(ni-1)*XCELL)]
-    
+
     
     #############################################################################
     # if option mask out is true it discards all stacks in region defined by mask
@@ -77,7 +83,7 @@ def point_to_domain(emis_file,output_dir, name, def_emis, projection, inProj, gr
                                        'diameter':'STKDM', 'temperature':'STKTK',
                                        'velocity':'STKVE'})
     
-    emis_file['LATITUDE'], emis_file['LONGITUDE'] = outProj(list(emis_file['x'][:]), list(emis_file['y'][:]),inverse='True') 
+    emis_file['LONGITUDE'], emis_file['LATITUDE'] = outProj(list(emis_file['x'][:]), list(emis_file['y'][:]),inverse='True') 
     
     emis_file=emis_file.rename(columns={'x':'XLOCA','y':'YLOCA'})
     emis_file['STKTK']=emis_file['STKTK']+273.15
@@ -96,10 +102,3 @@ def point_to_domain(emis_file,output_dir, name, def_emis, projection, inProj, gr
     emis_file.to_csv('{0}/{1}'.format(output_dir,name),index=False)
     
     print("Point data  {0} are in proper csv format in {1:.3f} seconds".format(name,time.time() - start_time))
-
-
-
-
-    
-    
-    

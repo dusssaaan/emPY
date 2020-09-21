@@ -1,73 +1,65 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
-GROUP POINT SOURCES
-
-Functions:    
-- group_point_sources: append all point sources csv to one file
--stack_params_to_netCDF4: write netcdf file with stack params 
-
-Libraries and modules needed: 
-libraries: pandas, netCDF4, numpy, pyproj, datetime, os
-modules:
-
-Revision History:
-    
-30.01.2019 D. Stefanik: creating first version of script
+Created on Thu Sep 26 10:51:06 2019
 
 @author: p6001
 """
 import pandas as pd
 import numpy as np
+import time
+import copy
+import os
+import datetime
 import netCDF4
 import pyproj
-import datetime
-import os
 
-def group_point_sources(points_path, list_point):
+coef=(10**6/(8760*3600))
+
+def point_time_arrays(dic_time_map, em_cat_file,points,dim,dic_time_matrix,var_names):
     
-    df=pd.DataFrame()
+    start_time=time.time() 
+
+    print(f"Point sources contain these internal categories {points['cat_internal'].unique()}")     
+    list_time_categories_used= [dic_time_map[x] for x in points['cat_internal'].unique() ]
+    print(f"These are speciated as following time profiles { list_time_categories_used}")
+                   
+    dic_time={}
+    for i in range(0,dim):
+        dic_time[i]=copy.deepcopy(points)
     
-    for file in list_point:
-        print('!!!!!!!!!!!!!!',file)                
-        data_file=pd.read_csv('{0}/{1}'.format(points_path,file))
+        for cat in list_time_categories_used:
             
-        df=df.append(data_file, sort=False)
-        
-    df=df.reset_index()
+            profile_time_as_cat=list(em_cat_file[em_cat_file.time_profile ==cat]['cat_internal'].unique())
+                                  
+            dic_time[i].loc[(dic_time[i].cat_internal.isin(profile_time_as_cat))]*= dic_time_matrix[cat][i]
     
-    df['ROW']=df.index
+    dic_species={}
+     
+    var_names_sel= (set(points.columns) & set(var_names.keys()))
+    for sp in var_names_sel:
+        dic_species[sp]=np.zeros([25,1,points.shape[0],1])
+        for i in range(0,25):
+            dic_species[sp][i,0,:,0]=dic_time[i][sp]
     
-    del df['index']    
-        
-    return df;    
+    for _ in var_names_sel:
+       if np.sum(dic_species[_])==0:
+          del dic_species[_]     
+    
+    print('numpy arrays are done in {0:.1f} sec'.format(time.time() - start_time))  
+    return dic_species;    
 
-    
+def point_to_netCDF(output_dir,out_file_name,var_names,dic_species,datum,projection,grid_params):
         
-
-def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
-    
-    output_dir=output_dir + '/point_sources' # save file in special subdirectory for point sources
+       
     if not os.path.exists(output_dir):
        os.makedirs(output_dir)
     
-    
-    
-    var_names = {'ISTACK': ['none', 'ISTACK', 'Stack group number'],
-                 'LATITUDE': ['degrees', 'LATITUDE', 'Latitude'],
-                 'LONGITUDE': ['degrees', 'LONGITUDE', 'Longitude'],
-                 'STKDM': ['m', 'STKDM', 'Inside stack diameter'],
-                 'STKHT': ['m', 'STKHT', 'Stack height above ground surface'],
-                 'STKTK': ['degrees K', 'STKTK', 'Stack exit temperature'],
-                 'STKVE': ['m/s', 'STKVE', 'Stack exit velocity'],
-                 'STKFLW': ['m**3/s', 'STKFLW', 'Stack exit flow rate'],
-                 'STKCNT': ['none', 'STKCNT', 'Number of stacks in group'],
-                 'ROW': ['none', 'ROW', 'Grid row number'],
-                 'COL': ['none', 'COL', 'Grid column number'],
-                 'XLOCA': ['', 'XLOCA', 'Projection x coordinate'],
-                 'YLOCA': ['', 'YLOCA', 'Projection y coordinate'],
-                 'IFIP': ['none', 'IFIP', 'FIPS CODE'],
-                 'LMAJOR': ['none', 'LMAJOR', '1= MAJOR SOURCE in domain, 0=otherwise'],
-                 'LPING': ['none', 'LPING', '1=PING SOURCE in domain, 0=otherwise']}
-    
+
+     
+    var_names_sel= { key: var_names[key] for key in dic_species }
+    var_names=var_names_sel
+
     
     
     global_params={ 'CDATE':np.int32('{0}{1:03d}'.format(datetime.datetime.today().year,datetime.datetime.today().timetuple().tm_yday)),
@@ -94,23 +86,22 @@ def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
                     'TSTEP':np.int32(10000),
                     'UPNAM':"OPENEOUT        ",
                     'VAR-LIST':"".join('{0:16s}'.format(f) for f in var_names.keys()),
-                    'VGLVLS':np.array([0.0, 0.0],dtype='float32'),
+                    'VGLVLS':np.array([0., 0.],dtype='float32'),
                     'VGTOP':np.float32( -9.e+36),
                     'VGTYP':np.int32(-9999),
                     'WDATE':np.int32('{0}{1:03d}'.format(datetime.datetime.today().year,datetime.datetime.today().timetuple().tm_yday)),
                     'WTIME':np.int32(63057),
                     'NCOLS':np.int32(1),
-                    'NROWS':np.int32(df_stack.shape[0]),
+                    'NROWS':np.int32(dic_species[list(dic_species.keys())[0]].shape[2]),
                     'XORIG':grid_params['XORIG'],
                     'YORIG':grid_params['YORIG'],
                     'XCELL':grid_params['XCELL'],
                     'YCELL':grid_params['XCELL'],
-                    'GDNAM':"Stacks_nov_grid "}
- 
-                      
+                    'GDNAM':f"STACKS-{out_file_name}"}
+   
     
-    with netCDF4.Dataset('{0}/STACK_PARAM.nc'.format(output_dir),mode='w') as out:
-        
+    with netCDF4.Dataset('{0}/{1}-{2}.nc'.format(output_dir,out_file_name,datum.isoformat()[:-9]),mode='w') as out:
+    
          # create globals
          for global_par in global_params:
                          
@@ -118,7 +109,7 @@ def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
 
          # create dimensions
         
-         out.createDimension('TSTEP', size=1)
+         out.createDimension('TSTEP', None)
          out.createDimension('DATE-TIME', size=global_params['DATE_TIME'])
          out.createDimension('LAY', size=global_params['NLAYS'])
          out.createDimension('VAR', size=global_params['NVARS'])
@@ -128,23 +119,29 @@ def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
          # create TFLAGS
          out.createVariable('TFLAG', np.int32, ('TSTEP', 'VAR', 'DATE-TIME'),fill_value=None)
          out.variables['TFLAG'].setncatts({'units': "<YYYYDDD,HHMMSS>", 'long_name': "FLAG", 'var_desc': "Timestep-valid flags:  (1) YYYYDDD or (2) HHMMSS"})     
-         out.variables['TFLAG'][0,0,0]=0
-         out.variables['TFLAG'][0,0,1]=0
          
          
+         tflag=np.zeros([25,global_params['NVARS']],dtype=int)
+         for i in range(1,24):
+             tflag[i,:]=int(i*10000)
+         
+         out.variables['TFLAG'][:,:,1]=tflag   
+         out.variables['TFLAG'][:24,:,0]=int('{0}{1:03d}'.format(datum.year,datum.timetuple().tm_yday))
+         datum_next=datum+datetime.timedelta(days=1)
+         out.variables['TFLAG'][24,:,0]=int('{0}{1:03d}'.format(datum_next.year,datum_next.timetuple().tm_yday))
+                  
          # create variables
          for name in var_names:
              
              out.createVariable(name, np.float32, ('TSTEP', 'LAY', 'ROW', 'COL'),fill_value=None)
              out.variables[name].setncatts({'units': var_names[name][0], 'long_name': var_names[name][1], 'var_desc': var_names[name][2]})     
-             out.variables[name][0,0,:,0]=np.array(df_stack[name][:])
-             
-    
-            
-    df_stack.drop(list(var_names.keys()), axis=1, inplace=True)
-    
-    
-    
-    return df_stack;
-    
-    
+             out.variables[name][:,:,:,:]=dic_species[name]*coef 
+
+
+
+
+
+
+
+
+
