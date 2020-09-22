@@ -50,10 +50,10 @@ to_domain_output_directory='/data/dusan/emPY/data/outputs-to_domain-skusanie'
 check_regrid=True #False
 
 #set mask out file for the area sources which can be creating using the mask_out tool in tools 
-mask_area='/data/em/data/input/mask/SL_MP_BIG.npy'
+#mask_area='/data/em/data/input/mask/SL_MP_BIG.npy'
 
 #set shape file for masking out the point sources
-mask_point='/data/em/data/input/mask/silesia_and_malopolska_common_boundary.shp'
+#mask_point='/data/em/data/input/mask/silesia_and_malopolska_common_boundary.shp'
 
 #parameters for the stacks which do not contain parameters in the invetory input
 #this default parameters will be use.
