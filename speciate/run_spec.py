@@ -58,7 +58,7 @@ em_cat_file=pd.read_csv(emPY_config_file.em_cat_file)
 if 'list_inv_area_spec' in emPY_config_file.__dir__():
     list_inv=emPY_config_file.list_inv_area_spec
 else: 
-    list_inv=os.listdir('/data/dusan/emPY/data/outputs-to_domain-skusanie')
+    list_inv=os.listdir(input_dir)
     list_inv.remove('point_sources')
 
 if 'list_inv_point_spec' in emPY_config_file.__dir__():
