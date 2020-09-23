@@ -20,7 +20,7 @@ Revision History:
 """
 #####
 #set path to case 
-case_path='/data/dusan/emPY/case_run'
+case_path='../case_run'
 
 
 # imported libraries

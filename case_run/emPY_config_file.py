@@ -118,9 +118,9 @@ tv_values='/data/dusan/emPY/case_run/tv_values.csv'
 #time variate _mapping files
 tv_series='/data/dusan/emPY/case_run/tv_series.csv'
 #start datum
-datum_start='2017-01-01'
+datum_start='2017-01-02'
 #end day
-datum_end='2017-01-01'
+datum_end='2017-01-02'
 #define dictionary output pollutants on cmaq input netcdf files, #only the names defined in this dictionary 
 #and also in column spec_name will be in the final input
 var_names={
