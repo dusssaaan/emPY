@@ -205,7 +205,9 @@ for name in list_inv:
         if s in mapper:
             auxilary_array=np.load(f'{input_dir}/{name}/{file}')
             for i in mapper[s]:
+                
                 dic_pol[i]+= auxilary_array*mapper[s][i]
+                
                 #print(i.split('-')+'-' + '0' if len(mapper[s])==1 else '1'  + '-'+ file)
                 check_list.append(i.split('-')[1]+'|' + ('0' if len(mapper[s])==1 else '1')  + '|'+ file +'|'+str(mapper[s][i]) )
                 

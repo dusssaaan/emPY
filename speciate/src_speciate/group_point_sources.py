@@ -89,7 +89,7 @@ def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
                     'NLAYS':np.int32(1),
                     'NTHIK':np.int32(1),
                     'NVARS':np.int32(len(var_names.keys())),
-                    'SDATE':np.int32(0),
+                    'SDATE':np.int32(2016001),
                     'STIME':np.int32(0),
                     'TSTEP':np.int32(10000),
                     'UPNAM':"OPENEOUT        ",
@@ -127,10 +127,13 @@ def stack_params_to_netCDF4(df_stack,output_dir,grid_params,projection):
          
          # create TFLAGS
          out.createVariable('TFLAG', np.int32, ('TSTEP', 'VAR', 'DATE-TIME'),fill_value=None)
-         out.variables['TFLAG'].setncatts({'units': "<YYYYDDD,HHMMSS>", 'long_name': "FLAG", 'var_desc': "Timestep-valid flags:  (1) YYYYDDD or (2) HHMMSS"})     
-         out.variables['TFLAG'][0,0,0]=0
-         out.variables['TFLAG'][0,0,1]=0
+         out.variables['TFLAG'].setncatts({'units': "<YYYYDDD,HHMMSS>", 'long_name': "TFLAG", 'var_desc': "Timestep-valid flags:  (1) YYYYDDD or (2) HHMMSS"})     
          
+         tflag=np.zeros([1,global_params['NVARS']],dtype=int)
+
+         out.variables['TFLAG'][:,:,1]=tflag
+         out.variables['TFLAG'][:16,:,0]=2016001
+              
          
          # create variables
          for name in var_names:

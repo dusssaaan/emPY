@@ -81,7 +81,7 @@ def point_to_netCDF(output_dir,out_file_name,var_names,dic_species,datum,project
                     'NLAYS':np.int32(1),
                     'NTHIK':np.int32(1),
                     'NVARS':np.int32(len(var_names.keys())),
-                    'SDATE':np.int32(0),
+                    'SDATE':np.int32('{0}{1:03d}'.format(datum.year,datum.timetuple().tm_yday)),
                     'STIME':np.int32(0),
                     'TSTEP':np.int32(10000),
                     'UPNAM':"OPENEOUT        ",
@@ -97,7 +97,7 @@ def point_to_netCDF(output_dir,out_file_name,var_names,dic_species,datum,project
                     'YORIG':grid_params['YORIG'],
                     'XCELL':grid_params['XCELL'],
                     'YCELL':grid_params['XCELL'],
-                    'GDNAM':f"STACKS-{out_file_name}"}
+                    'GDNAM':"OPENEOU2        "}
    
     
     with netCDF4.Dataset('{0}/{1}-{2}.nc'.format(output_dir,out_file_name,datum.isoformat()[:-9]),mode='w') as out:
