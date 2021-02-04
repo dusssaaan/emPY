@@ -103,8 +103,13 @@ for name in list_inv:
        
 
     au=dic_inv[name]
-    def_emis=au['def_emis']
     
+    
+    if 'new_pollutants' in au.keys():
+        new={ x.split('=')[0].strip(): x.split('=')[0].strip() for x in au['new_pollutants'].split(',') }
+        au['def_emis']={**au['def_emis'],**new}
+        
+    def_emis=au['def_emis']
     #area sources  
     if au['source_type'] == 'A' or au['source_type'] == 'L':
         
