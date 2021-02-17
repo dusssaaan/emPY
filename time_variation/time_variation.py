@@ -53,14 +53,13 @@ nj = emPY_config_file.grid_params['nj']
 projection=emPY_config_file.projection
 grid_params=emPY_config_file.grid_params
 
-
 #########################################################################################################
 # proper sript, nothing to set up
 #########################################################################################################
 start_time = time.time()
 
 #species_write to netcdf file
-cmaq_sp=list(pd.read_csv(emPY_config_file.spec_file)['spec_name'].unique())
+cmaq_sp=list(pd.read_csv(emPY_config_file.spec_file, comment='#')['spec_name'].unique())
 
 for _ in cmaq_sp: 
       if _ not in var_names: 
@@ -78,7 +77,7 @@ if not os.path.exists(output_dir):
 datum=datum_start
 
 dic_time_map=dict(zip(em_cat_file['cat_internal'], em_cat_file['time_profile']))
-points=pd.read_csv('/data/dusan/emPY/data/outputs-speciation-skusanie/point_sources/speciate_points')
+points=pd.read_csv(input_dir+'/point_sources/speciate_points')
 
 while datum <= datum_end :
     
