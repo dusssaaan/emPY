@@ -29,16 +29,19 @@ def csv_to_processor_names(emis_file, dic_inv):
         
             print('filter {} was applied'.format(filters))
     
-    if 'new_pollutants' in dic_inv.keys():
-        for equation in dic_inv['new_pollutants'].split(','):
-        
-            emis_file=emis_file.eval(equation)
-        
-            print('Equation {} was applied'.format(equation))
     
     # rename pollutant names according the def_emiss names         
     emis_file=emis_file.rename(columns=dic_inv['def_emis'])
     
+    if 'new_pollutants' in dic_inv.keys():
+        for equation in dic_inv['new_pollutants'].split(','):
+
+            emis_file=emis_file.eval(equation)
+
+            print('Equation {} was applied'.format(equation))
+
+
+
     # rename other columns in emis file
     convert_col=['x', 'y', 'ID','height', 'diameter', 'temperature', 'velocity', 
                      'cat_internal','source_id']
