@@ -13,6 +13,7 @@ Revision History:
 16.09.2019 D. Stefanik: creating first version of script      
 """
 import numpy as np
+import sys
 
 def csv_to_processor_names(emis_file, dic_inv):
     """
@@ -70,8 +71,11 @@ def csv_to_processor_names(emis_file, dic_inv):
     elif dic_inv['units']=='kilot/year':
        emis_file[pollutants]=1000*emis_file[pollutants]
        print('{} is in kilot/year and its transformed to t/year'.format(pollutants))
+    elif dic_inv['units']=='tonne/year':
+       print('{} is in t/year'.format(pollutants))
     else:
-       print('{0} is in {1} '.format(pollutants,dic_inv['units']))
+       print('Error, unknown unit format {0} is in {1} '.format(pollutants,dic_inv['units']))
+       sys.exit()
     print('')      
     
              
