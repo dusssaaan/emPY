@@ -64,8 +64,9 @@ else:
 if 'list_inv_point_spec' in emPY_config_file.__dir__():
     list_point=emPY_config_file.list_inv_point_spec
 else:
-    list_point=os.listdir(input_dir+'/point_sources')
-
+    if os.path.isdir(input_dir+'/point_sources'):
+       list_point=os.listdir(input_dir+'/point_sources')
+    else: list_point=False
 ###########################################################################################################
 start_time = time.time()
 
@@ -84,69 +85,72 @@ if not os.path.exists(output_dir):
 ###############################################################################
 #Point sources
 ################################################################################
-print('#################################')
-print('processing point sources')
-print('#################################')
-
-point_emissions=gps.stack_params_to_netCDF4(gps.group_point_sources(input_dir+'/point_sources',list_point),output_dir,grid_params,projection)
-
-#spec_names in gspro files
-spec_names=spec['spec_name'].unique()
-
-# create new columns in point_emission files
-for sp in spec_names:
-    if sp not in point_emissions.columns:
-        point_emissions[sp]=0 
-
-
-# for cycle for all categiories in GSPROFILES
-for cat in spec['cat'].unique():
-    print(cat)
+if list_point:
+    print('#################################')
+    print('processing point sources')
+    print('#################################')
     
-    # dictionary {'new_species_1': 'old_name', 'new_species_2': 'old_name' }
-    dic_speciate=dict(zip(spec[spec.cat==cat]['spec_name'], spec[spec.cat==cat]['old_name']))
-    # dictionary {'new_species_1': 'koef_1', 'new_species_2': 'koef_2' }
-    dic_koef=dict(zip(spec[spec.cat==cat]['spec_name'], spec[spec.cat==cat]['coef1']/spec[spec.cat==cat]['coef2']))
+    point_emissions=gps.stack_params_to_netCDF4(gps.group_point_sources(input_dir+'/point_sources',list_point),output_dir,grid_params,projection)
     
-    # case cat 0 which just convert names and coef
-    if cat == 0:
+    #spec_names in gspro files
+    spec_names=spec['spec_name'].unique()
     
-        for sp in dic_speciate:
-            if dic_speciate[sp] in point_emissions.columns:   
-                print('Speciate {0} on category {1} with coeficient {2}*{3}'.format(sp,cat,dic_koef[sp],dic_speciate[sp]))
-                
-                point_emissions[sp]=point_emissions[dic_speciate[sp]]*dic_koef[sp]      
+    # create new columns in point_emission files
+    for sp in spec_names:
+        if sp not in point_emissions.columns:
+            point_emissions[sp]=0 
     
-    else:
-        # list of all profiles (cat_internal) in em_cat_file which speciate according cat    
-        profiles_speciate_as_cat=list(em_cat_file[em_cat_file.speciation_profile ==cat]['cat_internal'].unique())
+    
+    # for cycle for all categiories in GSPROFILES
+    for cat in spec['cat'].unique():
+        print(cat)
         
+        # dictionary {'new_species_1': 'old_name', 'new_species_2': 'old_name' }
+        dic_speciate=dict(zip(spec[spec.cat==cat]['spec_name'], spec[spec.cat==cat]['old_name']))
+        # dictionary {'new_species_1': 'koef_1', 'new_species_2': 'koef_2' }
+        dic_koef=dict(zip(spec[spec.cat==cat]['spec_name'], spec[spec.cat==cat]['coef1']/spec[spec.cat==cat]['coef2']))
         
-        mask=point_emissions['cat_internal'].isin(profiles_speciate_as_cat)
-    
-        if mask.any():
-            
-            # choose that part of the point_emision file which will be speciate                
-            apply=point_emissions[mask]
-            # choose that part of the point_emision file which will not be speciate
-            not_apply=point_emissions[~mask]
+        # case cat 0 which just convert names and coef
+        if cat == 0:
         
             for sp in dic_speciate:
-                if dic_speciate[sp] in point_emissions.columns:
-                    print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
+                if dic_speciate[sp] in point_emissions.columns:   
+                    print('Speciate {0} on category {1} with coeficient {2}*{3}'.format(sp,cat,dic_koef[sp],dic_speciate[sp]))
                     
-                    apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
-
-            # merge apply and not_apply    
-            point_emissions=pd.concat([apply,not_apply],sort=False).sort_index()
-
-# point emissions to csv
-point_emissions=point_emissions[['cat_internal']+list(spec_names)]           
-point_emissions=point_emissions.replace(np.nan,0)
-point_emissions.to_csv(output_dir+'/point_sources/'+'speciate_points', index=False)    
-##############################################################################################################################  
-
-
+                    point_emissions[sp]=point_emissions[dic_speciate[sp]]*dic_koef[sp]      
+        
+        else:
+            # list of all profiles (cat_internal) in em_cat_file which speciate according cat    
+            profiles_speciate_as_cat=list(em_cat_file[em_cat_file.speciation_profile ==cat]['cat_internal'].unique())
+            
+            
+            mask=point_emissions['cat_internal'].isin(profiles_speciate_as_cat)
+        
+            if mask.any():
+                
+                # choose that part of the point_emision file which will be speciate                
+                apply=point_emissions[mask]
+                # choose that part of the point_emision file which will not be speciate
+                not_apply=point_emissions[~mask]
+            
+                for sp in dic_speciate:
+                    if dic_speciate[sp] in point_emissions.columns:
+                        print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
+                        
+                        apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
+    
+                # merge apply and not_apply    
+                point_emissions=pd.concat([apply,not_apply],sort=False).sort_index()
+    
+    # point emissions to csv
+    point_emissions=point_emissions[['cat_internal']+list(spec_names)]           
+    point_emissions=point_emissions.replace(np.nan,0)
+    point_emissions.to_csv(output_dir+'/point_sources/'+'speciate_points', index=False)    
+    ##############################################################################################################################  
+else:
+    print('#################################')
+    print('no point sources detected')
+    print('#################################')
 #########################################################################################################
 # area sources
 #########################################################################################################
