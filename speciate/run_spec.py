@@ -59,7 +59,8 @@ if 'list_inv_area_spec' in emPY_config_file.__dir__():
     list_inv=emPY_config_file.list_inv_area_spec
 else: 
     list_inv=os.listdir(input_dir)
-    list_inv.remove('point_sources')
+    if os.path.isdir(input_dir+'/point_sources'):
+       list_inv.remove('point_sources')
 
 if 'list_inv_point_spec' in emPY_config_file.__dir__():
     list_point=emPY_config_file.list_inv_point_spec
@@ -154,98 +155,105 @@ else:
 #########################################################################################################
 # area sources
 #########################################################################################################
-print('#################################')
-print('processing area sources')
-print('#################################')
-#define which pollutants will mapping to themselves
-spec_from_all_categories=list(spec[spec.cat==0]['old_name'].unique())
+if len(list_inv)>0:
 
-# create mapper {cat_internal-old_poll_name': {cat_internal-old_poll_name: koef} }
-mapper={}
-for name in list_inv:
-    for file in os.listdir(f'{input_dir}/{name}'):
-           
-        cat_poll_old=file.split( "-" )
-        s=f'{cat_poll_old[0]}-{cat_poll_old[1]}'
-        cat=em_cat_file[em_cat_file['cat_internal']== int(cat_poll_old[0])] 
+    print('#################################')
+    print('processing area sources')
+    print('#################################')
+    #define which pollutants will mapping to themselves
+    spec_from_all_categories=list(spec[spec.cat==0]['old_name'].unique())
     
-        if cat_poll_old[1] not in spec_from_all_categories:          
-            
-            if cat.shape[0]==0: 
-               print(f'{s} is not taking to the speciate inputs, category {cat_poll_old[0]} is not defined in em_cat_file')
-            elif cat.shape[0] > 1 :
-               print(f'!!!!Error and warning cat id {cat_poll_old[0]} is more than one time in em_cat_file') 
-               sys.exit()
-            elif cat.shape[0]==1:
-               cat=int(cat['speciation_profile']) 
-                                            
-               select_spec=spec[(spec.cat==cat) & (spec.old_name==cat_poll_old[1])]
+    # create mapper {cat_internal-old_poll_name': {cat_internal-old_poll_name: koef} }
+    mapper={}
+    for name in list_inv:
+        for file in os.listdir(f'{input_dir}/{name}'):
                
-               if select_spec.shape[0]==0:
-                  
-                  print(f'{s} is not taking in the speciate inputs') 
-                  
-               else: 
+            cat_poll_old=file.split( "-" )
+            s=f'{cat_poll_old[0]}-{cat_poll_old[1]}'
+            cat=em_cat_file[em_cat_file['cat_internal']== int(cat_poll_old[0])] 
+        
+            if cat_poll_old[1] not in spec_from_all_categories:          
+                
+                if cat.shape[0]==0: 
+                   print(f'{s} is not taking to the speciate inputs, category {cat_poll_old[0]} is not defined in em_cat_file')
+                elif cat.shape[0] > 1 :
+                   print(f'!!!!Error and warning cat id {cat_poll_old[0]} is more than one time in em_cat_file') 
+                   sys.exit()
+                elif cat.shape[0]==1:
+                   cat=int(cat['speciation_profile']) 
+                                                
+                   select_spec=spec[(spec.cat==cat) & (spec.old_name==cat_poll_old[1])]
+                   
+                   if select_spec.shape[0]==0:
+                      
+                      print(f'{s} is not taking in the speciate inputs') 
+                      
+                   else: 
+                       mapper[s]={} 
+                       mapper[s]=dict(zip(select_spec['spec_name'].apply(lambda x: cat_poll_old[0]+'-'+x), select_spec['coef1']/select_spec['coef2']))
+            else:  
                    mapper[s]={} 
-                   mapper[s]=dict(zip(select_spec['spec_name'].apply(lambda x: cat_poll_old[0]+'-'+x), select_spec['coef1']/select_spec['coef2']))
-        else:  
-               mapper[s]={} 
-               mapper[s]=dict(zip(spec[spec.old_name==cat_poll_old[1]]['spec_name'].apply(lambda x: cat_poll_old[0]+'-'+x), spec[spec.old_name==cat_poll_old[1]]['coef1']/spec[spec.old_name==cat_poll_old[1]]['coef2']))
+                   mapper[s]=dict(zip(spec[spec.old_name==cat_poll_old[1]]['spec_name'].apply(lambda x: cat_poll_old[0]+'-'+x), spec[spec.old_name==cat_poll_old[1]]['coef1']/spec[spec.old_name==cat_poll_old[1]]['coef2']))
+    
+    
+    # making set of unique defined cat_internal-pollutant_new_name strings
+    cat_pol_new_unique=set([item for sublist in list(map(lambda x: list(mapper[x].keys()), mapper)) for item in sublist])
+    
+    #making empty arrays with size ni, nj in dictionary with keys unique_cat_em
+    dic_pol={}
+    for _ in cat_pol_new_unique:
+        dic_pol[_]=np.zeros([grid_params['ni'],grid_params['nj']])
+    
+    check_list=[]
+    # making speciation#########################    
+    for name in list_inv:
+        for file in os.listdir(f'{input_dir}/{name}'):          
+            s=f"{file.split( '-' )[0]}-{file.split( '-' )[1]}"
+            if s in mapper:
+                auxilary_array=np.load(f'{input_dir}/{name}/{file}')
+                for i in mapper[s]:
+                    
+                    dic_pol[i]+= auxilary_array*mapper[s][i]
+                    
+                    #print(i.split('-')+'-' + '0' if len(mapper[s])==1 else '1'  + '-'+ file)
+                    check_list.append(i.split('-')[1]+'|' + ('0' if len(mapper[s])==1 else '1')  + '|'+ file +'|'+str(mapper[s][i]) )
+                    
+    # save arrays        
+    for _ in dic_pol: np.save(f'{output_dir}/{_}', dic_pol[_]) 
 
+else:
+    print('#################################')
+    print('no area sources detected')
+    print('#################################')
 
-# making set of unique defined cat_internal-pollutant_new_name strings
-cat_pol_new_unique=set([item for sublist in list(map(lambda x: list(mapper[x].keys()), mapper)) for item in sublist])
-
-#making empty arrays with size ni, nj in dictionary with keys unique_cat_em
-dic_pol={}
-for _ in cat_pol_new_unique:
-    dic_pol[_]=np.zeros([grid_params['ni'],grid_params['nj']])
-
-check_list=[]
-# making speciation#########################    
-for name in list_inv:
-    for file in os.listdir(f'{input_dir}/{name}'):          
-        s=f"{file.split( '-' )[0]}-{file.split( '-' )[1]}"
-        if s in mapper:
-            auxilary_array=np.load(f'{input_dir}/{name}/{file}')
-            for i in mapper[s]:
-                
-                dic_pol[i]+= auxilary_array*mapper[s][i]
-                
-                #print(i.split('-')+'-' + '0' if len(mapper[s])==1 else '1'  + '-'+ file)
-                check_list.append(i.split('-')[1]+'|' + ('0' if len(mapper[s])==1 else '1')  + '|'+ file +'|'+str(mapper[s][i]) )
-                
-# save arrays        
-for _ in dic_pol: np.save(f'{output_dir}/{_}', dic_pol[_]) 
-
+    
 print('##################### Program run sucessfuly ########################################')
 print("Data are speciated in %s seconds ---" % (time.time() - start_time))
 
 
 
 ############################Checking area emisions ###################################################################
-print("Checking area emisions files")
+if len(list_inv)>0:
 
-
-for poll in spec['spec_name'].unique():
+    for poll in spec['spec_name'].unique():
+        
+        print('###########################################################')
+        print(poll)
+        print('###')
+        print('mapping themselves:')      
+        for keys in check_list:
+            if keys.startswith('{}|0'.format(poll)):
+               print(keys.split('|')[2]+f"' with koef {float(keys.split('|')[3]):.3f}")
+        print('###')       
+        print('speciating from files:')
+        for keys in check_list:
+            if keys.startswith('{}|1'.format(poll)):
+               print(keys.split('|')[2]+f"' with koef {float(keys.split('|')[3]):.10f}")          
+     
     
-    print('###########################################################')
-    print(poll)
-    print('###')
-    print('mapping themselves:')      
-    for keys in check_list:
-        if keys.startswith('{}|0'.format(poll)):
-           print(keys.split('|')[2]+f"' with koef {float(keys.split('|')[3]):.3f}")
-    print('###')       
-    print('speciating from files:')
-    for keys in check_list:
-        if keys.startswith('{}|1'.format(poll)):
-           print(keys.split('|')[2]+f"' with koef {float(keys.split('|')[3]):.10f}")          
- 
-
-
-print("Speciation is checked in %s seconds ---" % (time.time() - start_time))       
-
+    
+    print("Speciation is checked in %s seconds ---" % (time.time() - start_time))       
+    
 
 
 
