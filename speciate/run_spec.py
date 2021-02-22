@@ -62,7 +62,7 @@ else:
     list_inv.remove('point_sources')
 
 if 'list_inv_point_spec' in emPY_config_file.__dir__():
-    list_point=emPY_config_file.list_point_spec
+    list_point=emPY_config_file.list_inv_point_spec
 else:
     list_point=os.listdir(input_dir+'/point_sources')
 
@@ -112,7 +112,7 @@ for cat in spec['cat'].unique():
     if cat == 0:
     
         for sp in dic_speciate:
-               
+            if dic_speciate[sp] in point_emissions.columns:   
                 print('Speciate {0} on category {1} with coeficient {2}*{3}'.format(sp,cat,dic_koef[sp],dic_speciate[sp]))
                 
                 point_emissions[sp]=point_emissions[dic_speciate[sp]]*dic_koef[sp]      
@@ -132,10 +132,10 @@ for cat in spec['cat'].unique():
             not_apply=point_emissions[~mask]
         
             for sp in dic_speciate:
-               
-                print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
-                
-                apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
+                if dic_speciate[sp] in point_emissions.columns:
+                    print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
+                    
+                    apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
 
             # merge apply and not_apply    
             point_emissions=pd.concat([apply,not_apply],sort=False).sort_index()
