@@ -77,7 +77,7 @@ if not os.path.exists(output_dir):
 datum=datum_start
 
 dic_time_map=dict(zip(em_cat_file['cat_internal'], em_cat_file['time_profile']))
-points=pd.read_csv(input_dir+'/point_sources/speciate_points')
+if os.path.isdir(input_dir+'/point_sources'):points=pd.read_csv(input_dir+'/point_sources/speciate_points')
 
 while datum <= datum_end :
     
@@ -89,12 +89,19 @@ while datum <= datum_end :
     dic_species=gt.area_time_arrays(input_dir,var_names_sel,dic_time_matrix, dic_time_map,dim,ni,nj)
     gt.gridded_to_netCDF(output_dir,out_file_name,var_names_sel,dic_species,datum,projection,grid_params)
     
-    print("####################### Processing point sources ############################################")
+    if os.path.isdir(input_dir+'/point_sources'):
+       print("####################### Processing point sources ############################################")
     
-    dic_species=pt.point_time_arrays(dic_time_map,em_cat_file,points,dim,dic_time_matrix,var_names)
-    pt.point_to_netCDF(output_dir,out_file_name +'_STACK',var_names_sel,dic_species,datum,projection,grid_params)
-    
+       dic_species=pt.point_time_arrays(dic_time_map,em_cat_file,points,dim,dic_time_matrix,var_names)
+       pt.point_to_netCDF(output_dir,out_file_name +'_STACK',var_names_sel,dic_species,datum,projection,grid_params)
+    else:
+       print('no point sources detected') 
     
     datum += datetime.timedelta(days=1)
-    
+
+if os.path.isdir(input_dir+'/point_sources'):
+    os.system(f"cp {input_dir+'/point_sources/STACK_PARAM.nc'} {output_dir}")
+
+
+
 print('Program run succesfully:-) in {0:.1f} sec'.format(time.time() - start_time))  
