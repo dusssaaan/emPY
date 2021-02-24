@@ -96,7 +96,7 @@ def gridded_to_netCDF(output_dir,out_file_name,var_names,dic_species,datum,proje
                     'YORIG':grid_params['YORIG'],
                     'XCELL':grid_params['XCELL'],
                     'YCELL':grid_params['XCELL'],
-                    'GDNAM':f"{out_file_name}"}
+                    'GDNAM':f"{out_file_name[:16]}"}
    
     
     with netCDF4.Dataset('{0}/{1}-{2}.nc'.format(output_dir,out_file_name,datum.isoformat()[:-9]),mode='w') as out:
