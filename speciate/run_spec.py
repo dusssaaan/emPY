@@ -124,24 +124,33 @@ if list_point:
             # list of all profiles (cat_internal) in em_cat_file which speciate according cat    
             profiles_speciate_as_cat=list(em_cat_file[em_cat_file.speciation_profile ==cat]['cat_internal'].unique())
             
-            
-            mask=point_emissions['cat_internal'].isin(profiles_speciate_as_cat)
-        
-            if mask.any():
-                
-                # choose that part of the point_emision file which will be speciate                
-                apply=point_emissions[mask]
-                # choose that part of the point_emision file which will not be speciate
-                not_apply=point_emissions[~mask]
-            
-                for sp in dic_speciate:
+            for sp in dic_speciate:
                     if dic_speciate[sp] in point_emissions.columns:
                         print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
                         
-                        apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
+            
+                        point_emissions[sp]=point_emissions.apply(lambda x: x[dic_speciate[sp]]*dic_koef[sp] 
+                                        if x['cat_internal'] in profiles_speciate_as_cat and
+                                        x[dic_speciate[sp]]==x[dic_speciate[sp]] else x[sp], axis=1)
+                        
+            
+            # mask=point_emissions['cat_internal'].isin(profiles_speciate_as_cat)
+        
+            # if mask.any():
+                
+            #     # choose that part of the point_emision file which will be speciate                
+            #     apply=point_emissions[mask]
+            #     # choose that part of the point_emision file which will not be speciate
+            #     not_apply=point_emissions[~mask]
+            
+            #     for sp in dic_speciate:
+            #         if dic_speciate[sp] in point_emissions.columns:
+            #             print('Speciate {0} on categories {1} as {2} with coeficient {3}*{4}'.format(sp,profiles_speciate_as_cat,cat,dic_koef[sp],dic_speciate[sp]))
+                        
+            #             apply[sp]=apply[dic_speciate[sp]]*dic_koef[sp]             
     
-                # merge apply and not_apply    
-                point_emissions=pd.concat([apply,not_apply],sort=False).sort_index()
+            #     # merge apply and not_apply    
+            #     point_emissions=pd.concat([apply,not_apply],sort=False).sort_index()
     
     # point emissions to csv
     point_emissions=point_emissions[['cat_internal']+list(spec_names)]           
