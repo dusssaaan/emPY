@@ -29,6 +29,7 @@ import src_time_variation.time_matrix as tm
 import src_time_variation.gridded_emision_time as gt
 import src_time_variation.point_emision_time as pt
 import sys
+import netCDF4
 import importlib
 sys.path.append(case_path)
 import emPY_config_file
@@ -43,6 +44,7 @@ T_ZONE=emPY_config_file.T_ZONE
 tv_mapping=pd.read_csv(emPY_config_file.tv_mapping)
 tv_values=pd.read_csv(emPY_config_file.tv_values) 
 tv_series=pd.read_csv(emPY_config_file.tv_series)
+dic_array=emPY_config_file.dic_array
 em_cat_file=pd.read_csv(emPY_config_file.em_cat_file)
 datum_start=datetime.datetime.strptime(emPY_config_file.datum_start, '%Y-%m-%d')
 datum_end=datetime.datetime.strptime(emPY_config_file.datum_end, '%Y-%m-%d')
@@ -73,6 +75,12 @@ time_zone=pytz.timezone(T_ZONE)
 if not os.path.exists(output_dir):
    os.makedirs(output_dir)
 
+
+dic_array_nc={}
+for cat in dic_array:
+
+        dic_array_nc[cat]= netCDF4.Dataset(dic_array[cat])
+
 ###### Looping for the days ##############################################################
 datum=datum_start
 
@@ -86,7 +94,7 @@ while datum <= datum_end :
     
     print("####################### Processing area sources ############################################")
     
-    dic_species=gt.area_time_arrays(input_dir,var_names_sel,dic_time_matrix, dic_time_map,dim,ni,nj)
+    dic_species=gt.area_time_arrays(time_zone,datum, input_dir,var_names,dic_time_matrix, dic_time_map,dim,ni,nj,dic_array_nc)
     gt.gridded_to_netCDF(output_dir,out_file_name,var_names_sel,dic_species,datum,projection,grid_params)
     
     if os.path.isdir(input_dir+'/point_sources'):

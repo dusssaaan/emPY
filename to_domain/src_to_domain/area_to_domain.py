@@ -96,7 +96,7 @@ def area_to_grid(emis_file, shape_file, output_dir, name, def_emis, projection, 
                     if source_type == 'A': coef=pol2.intersection(pol).area/pol2.area
                     else: coef=pol2.intersection(pol).length/pol2.length  
                     
-                    for de in def_emis.values():    
+                    for de in def_emis.values():
                         dic_out['{0}_{1}'.format(de,sn)][i,j]+=coef*em[de]
       
         print("cat {0} is regrided in {1:.3f} seconds ---".format(sn,time.time() - start_time))  

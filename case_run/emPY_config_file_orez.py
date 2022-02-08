@@ -7,12 +7,11 @@ set the parameters for the emPY scripts
 #general settings
 
 # set projection
-
 projection={'proj': 'lcc',
- 'lat_1': 48.80182647705078,
- 'lat_2': 48.80182647705078,
- 'lat_0': 48.80182647705078,
- 'lon_0': 18.11156463623047,
+ 'lat_1': 48.8018264770508,
+ 'lat_2': 48.8018264770508,
+ 'lat_0': 48.8018264770508,
+ 'lon_0': 18.1115646362305,
  'x_0': 0,
  'y_0': 0,
  'a': 6370000.0,
@@ -32,12 +31,12 @@ projection={'proj': 'lcc',
 # 'b': 6370000.0,
 # 'units': 'm',
 
-# set grid parameters
+# set grid parameters pre orez
 grid_params={'XCELL': 2000,
- 'XORIG': -495000,
- 'YORIG': -367000,
- 'ni': 367,
- 'nj': 495}
+ 'XORIG': -492000,
+ 'YORIG': -364000,
+ 'ni': 364,
+ 'nj': 492 }
 
 # d02
 #grid_params={'XCELL': 4710.621094,
@@ -80,9 +79,9 @@ list_inv=dic_inv.keys()
 # or take just specific ones in list
 #list_inv=['kominy_v1']
 #list_inv=['EMEP_NOX','EMEP_BAP','EMEP_SOX','EMEP_PM25','EMEP_PM10']
-list_inv=['CDV_faza2'] #'CDV_2019_new', 'TNO_SK_2015_A', 'TNO_SK_2015_P','pol_v1','pol_point','kominy_v1','SVK_resHeat_15_85']
+#list_inv=['CDV_2019_new']
 #define outpu directory of the to domain
-to_domain_output_directory='/data/dusan/emPY/data/outputs-to_domain-2019_ala_fix'
+to_domain_output_directory='/data/dusan/emPY/data/outputs-to_domain-2019_ala_orez'
 
 #set True if you want to have regriding control check in output
 check_regrid=True #False
@@ -123,10 +122,10 @@ parameters[1080]=parameters[1040]
 #setting for speciate
 
 #####
-#set input directory
-speciate_input_dir='/data/dusan/emPY/data/outputs-to_domain-2019_ala_fix'
+#set input directory  
+speciate_input_dir='/data/dusan/emPY/data/outputs-to_domain-2019_ala_orez'
 # set the output directory
-speciate_output_dir='/data/dusan/emPY/data/outputs-speciation-2019_ala_res_heat'                     # outputs-speciation-2019_ala_agri
+speciate_output_dir='/data/dusan/emPY/data/outputs-speciation-2019_ala_orez'
 # set the aero spec file
 spec_file='/data/dusan/emPY/case_run/spec_file.csv'
 
@@ -134,20 +133,20 @@ spec_file='/data/dusan/emPY/case_run/spec_file.csv'
 em_cat_file='/data/dusan/emPY/case_run/emission_categories.csv'
 
 #list inventory for area sources which you want if other than to domain make specific list
-list_inv_area_spec=['SVK_resHeat_15_85']   #'pol_point','pol_v1'
+#list_inv_area_spec=['pol_v1', 'pol_point']
 
 #list inventory for point sources which you want if other than to domain make specific list
-list_inv_point_spec=[]
+#list_inv_point_spec=['invetory_1', 'inventory_2']
 
 
 ##############################
 #setting for time_variate
 #set input directory
-time_variate_input_dir= speciate_output_dir #/data/dusan/emPY/data/outputs-speciation/  #speciate_output_dir'/data/dusan/emPY/data/outputs-speciation-2019_CDV_faza2'
+time_variate_input_dir='/data/dusan/emPY/data/outputs-speciation-2019_ala_orez'
 # set the output directory
-time_variate_output_dir='/data/oko/dusan/emisie/modelovanie_2021_zlozky/outputs-final-2021_res_heat'
+time_variate_output_dir='/data/oko/dusan/emisie/modelovanie_2019/outputs-final-2019_ala_orez'
 #name of output files in form out_file_name-datum
-out_file_name='EM_res_heat'     #'EM_2021_agri'
+out_file_name='EM_2019_ala_orez'
 #define main time ZONE of domain names must be recognized by library pytz
 T_ZONE='Europe/Prague'
 #time variate _mapping files 
@@ -155,13 +154,10 @@ tv_mapping='/data/dusan/emPY/case_run/tv_map_em.csv'
 tv_values='/data/dusan/emPY/case_run/tv_values.csv'
 #time variate _mapping files
 tv_series='/data/dusan/emPY/case_run/tv_series.csv'
-# dic with time arrays, provide empty dic_array if no time_matrix is required 
-dic_array = {9020:'/data/oko/dusan/res_heat_profile_nov21_sliac_solid.nc' }
-
 #start datum
-datum_start='2021-10-31'
+datum_start='2021-03-05'
 #end day
-datum_end='2021-11-30'
+datum_end='2021-03-09'
 #define dictionary output pollutants on cmaq input netcdf files, #only the names defined in this dictionary 
 #and also in column spec_name will be in the final input
 var_names={

@@ -12,7 +12,7 @@ import netCDF4
 import datetime
 
 coef=(10**6/(8760*3600))
-def area_time_arrays(input_dir,var_names,dic_time_matrix, dic_time_map,dim,ni,nj):
+def area_time_arrays(time_zone,datum, input_dir,var_names,dic_time_matrix, dic_time_map,dim,ni,nj,dic_array_nc):
    
    
    
@@ -21,8 +21,9 @@ def area_time_arrays(input_dir,var_names,dic_time_matrix, dic_time_map,dim,ni,nj
    dic_species={}         
    for spec in var_names:
        dic_species[spec]=np.zeros([dim,1,ni,nj])
-  
-                                                                                                                                                                                                                                                                                                                                                                     
+   
+   shift_time=int(str(time_zone.localize(datum))[-6:-3])
+   local_datum=datum+datetime.timedelta(hours=shift_time)                                                                                                                                                                                                                                                                                                                                                                 
    for file in (set(os.listdir(input_dir))-set(['point_sources'])):
         f_split=file.split( "-" )
             
@@ -32,12 +33,16 @@ def area_time_arrays(input_dir,var_names,dic_time_matrix, dic_time_map,dim,ni,nj
             
               au=np.load('{0}/{1}'.format(input_dir,file))
                   
-              au2=np.zeros([dim,1,au.shape[0],au.shape[1]])
-            
-              for i in range(0,dim):
-                  au2[i,0,:,:]=au[:,:]*dic_time_matrix[dic_time_map[int(f_split[0])]][i]
+              if dic_time_map[int(f_split[0])] not  in dic_array_nc.keys():
+                 au2=np.einsum("kl,i->ikl",au,dic_time_matrix[dic_time_map[int(f_split[0])]])
+              else:
+                 
+                 index3D = (local_datum.timetuple().tm_yday-1)*24+local_datum.timetuple().tm_hour
+
+                 print(f'time matrix is applied for {int(f_split[0])} ')
+                 au2=np.einsum("kl,ikl->ikl",au,dic_array_nc[dic_time_map[int(f_split[0])]].variables['TimeProfile'][index3D:index3D+dim,:,:].data)
              
-              dic_species[f_split[1][:-4]]+=au2
+              dic_species[f_split[1][:-4]][:,0,:,:]+=au2
             
            else:
               print('{0}-{1} is not taking to time variation'.format(f_split[0],f_split[1][:-4])) 

@@ -70,7 +70,9 @@ def time_matrix(time_zone, tv_values, tv_mapping, tv_series, em_cat_file,datum,d
                   
                  
                   
-            dic_time_matrix[category]=np.array(dic_time_matrix[category])     
-    
+            dic_time_matrix[category]=np.array(dic_time_matrix[category])               
+
+
+
     print('time arrays are prepared in {0:.1f} sec'.format(time.time() - start_time))
     return dic_time_matrix; 
